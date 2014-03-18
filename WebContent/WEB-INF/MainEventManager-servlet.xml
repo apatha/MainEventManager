@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans
+	xsi:schemaLocation=" http://www.springframework.org/schema/beans
+ http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+ http://www.springframework.org/schema/context 
+ http://www.springframework.org/schema/context/spring-context-3.0.xsd
+  http://www.springframework.org/schema/aop  
+ http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+  http://www.springframework.org/schema/mvc 
+  http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+ http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd        
+http://www.springframework.org/schema/util
+ http://www.springframework.org/schema/util/spring-util.xsd
+ http://www.springframework.org/schema/task 
+  http://www.springframework.org/schema/task/spring-task-3.0.xsd "
+
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:util="http://www.springframework.org/schema/util">
+
+
+	<task:annotation-driven />
+	<mvc:annotation-driven />
+	<mvc:resources location="/resources/" mapping="/resources/**" />
+	<context:component-scan
+		base-package="com.nisum.eventmanager.controllers,com.nisum.eventmanager.validation" />
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename" value="/WEB-INF/messages" />
+		<property name="cacheSeconds" value="3000" />
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+		<property name="order" value="2" />
+	</bean>
+
+<bean id="viewResolver1" class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+  		<property name="order" value="1"/>
+  		<property name="basename" value="view"/>
+	</bean>
+
+	<bean id="adminLoginDao" class="com.nisum.eventmanager.dao.AdminLoginDao">
+		<property name="jdbcTemplateObject" ref="jdbcTemplate" />
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="datasource"></property>
+	</bean>
+
+	<bean id="datasource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+   		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+	    <property name="url" value="jdbc:mysql://localhost:3306/project"/>
+		<property name="username" value="root" />
+		<property name="password" value="admin" />
+	</bean>
+
+	<bean id="reportGenerationDao" class="com.nisum.eventmanager.dao.ReportGenerationDao">
+		<property name="jdbcTemplateObject" ref="jdbcTemplate" />
+	</bean>
+
+	<!-- for dynamic creation of tables -->
+	<bean id="dynamicTableCreationInterface" class="com.nisum.eventmanager.dao.DynamicTableCreation">
+		<property name="jdbcTemplateObject" ref="jdbcTemplate" />
+	</bean>
+
+	<bean id="eventStructure" class="com.nisum.eventmanager.foldercreation.EventStructure" />
+
+	<bean id="dataWritting" class="com.nisum.eventmanager.datawriting.DataWriting" />
+
+	<bean id="dataCopying" class="com.nisum.eventmanager.datacopying.DataCopying" />
+
+	<bean id="dynamicCompilation"
+		class="com.nisum.eventmanager.dynamiccompilation.DynamicCompilation" />
+
+
+	<!-- The quartz scheduler configuration -->
+	<bean id="scheduler"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+		scope="prototype" />
+
+	<!-- <import resource="datasource.xml"/> -->
+	<bean id="model" class="com.nisum.eventmanager.model.SchedulingModel" />
+
+	<!-- The Task Bean -->
+	<bean id="createSchudule" class="com.nisum.eventmanager.schedular.CreateSchudule">
+		<property name="scheduler" ref="scheduler" />
+		<property name="mailSenders" ref="mailMail"></property>
+		<!-- <property name="targetMethod"><value>performAction</value></property> -->
+	</bean>
+	<bean id="schedulerTask"
+		class="org.springframework.scheduling.timer.MethodInvokingTimerTaskFactoryBean">
+		<property name="targetObject" ref="mailMail" />
+		<property name="targetMethod" value="performAction" />
+		<!-- <property name="targetMethod" value="printMe" /> -->
+	</bean>
+
+    <bean id="bootstrap" class="com.nisum.eventmanager.schedular.BootstrapClass"/>
+ 
+    <bean id="getDbClass" class="com.nisum.eventmanager.schedular.GetDbClass"/>
+	<bean id="retrieveEvents" class="com.nisum.eventmanager.dao.RetreivingEvents">
+			<property name="createSchudule" ref="createSchudule"/>
+	</bean>	
+
+	<bean id="mailsender" class="org.springframework.mail.javamail.JavaMailSenderImpl" scope="prototype">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="pallada@nisum.com" />
+		<property name="password" value="pravallika@123A" />
+
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+	</bean>
+	<bean id="mailMail" class="com.nisum.eventmanager.mail.MailSenders">
+		<property name="mailSender" ref="mailsender"></property>
+		<property name="from" value="pallada@nisum.com"></property>
+	</bean>
+	
+
+</beans>
